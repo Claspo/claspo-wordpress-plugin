@@ -1,6 +1,12 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+?>
+
 <div class="wrapper">
     <div class="content-success">
-        <img src="<?php echo plugins_url('img/claspo-logo-black.svg', dirname(__FILE__)); ?>" alt="">
+        <img src="<?php echo esc_url(plugins_url('img/claspo-logo-black.svg', dirname(__FILE__))); ?>" alt="">
 
         <div class="content-success-message">
             <div class="h1 done mb-14">

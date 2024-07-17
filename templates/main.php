@@ -1,6 +1,12 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
+?>
+
 <div class="wrapper-blank">
     <header>
-        <img src="<?php echo plugins_url('img/claspo-logo-black.svg', dirname(__FILE__)); ?>" alt="">
+        <img src="<?php echo esc_url(plugins_url('img/claspo-logo-black.svg', dirname(__FILE__))); ?>" alt="">
         <a href="https://my.claspo.io/dashboard-ui/#/widgets-list" class="cl-btn-secondary w-auto"><span class="cl-btn-label">Manage widgets</span></a>
     </header>
 
@@ -8,7 +14,7 @@
         <h1 class="mb-30">Create new widget</h1>
         <div class="cl-widget-tiles">
             <a href="https://my.claspo.io/dashboard-ui/#/widget/from-template/new" class="cl-widget-tile">
-                <img class="cl-widget-img" src="<?php echo plugins_url('img/template-library.svg', dirname(__FILE__)); ?>" width="140" height="172" alt="">
+                <img class="cl-widget-img" src="<?php echo esc_url(plugins_url('img/template-library.svg', dirname(__FILE__))); ?>" width="140" height="172" alt="">
                 <div class="cl-widget-title">Template library</div>
             </a>
 
@@ -17,9 +23,9 @@
                 <div class="cl-widget-title">Start from scratch</div>
             </a>
         </div>
-        <form method="post" action="<?php echo admin_url('admin-post.php'); ?>">
-            <input type="hidden" name="action" value="csp_disconnect_script">
-			<?php wp_nonce_field('csp_disconnect_script', 'csp_nonce'); ?>
+        <form method="post" action="<?php echo esc_url(admin_url('admin-post.php')); ?>">
+            <input type="hidden" name="action" value="claspo_disconnect_script">
+            <?php wp_nonce_field('claspo_disconnect_script', 'claspo_nonce'); ?>
             <button type="submit" class="cl-btn-support w-auto mt-auto" style="cursor: pointer;" id="deactivate"><span class="cl-btn-label">Deactivate</span></button>
         </form>
     </div>

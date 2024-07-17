@@ -1,29 +1,35 @@
+<?php
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly
+}
+?>
+
 <div class="wrapper">
     <div class="content">
         <div class="auth-wrapper">
-            <img src="<?php echo plugins_url('img/claspo-logo-black.svg', dirname(__FILE__)); ?>" alt="">
-            <h1 class="h1 mt-38 mb-20">Let’s begin!</h1>
+            <img src="<?php echo esc_url(plugins_url('img/claspo-logo-black.svg', dirname(__FILE__))); ?>" alt="">
+            <h1 class="h1 mt-38 mb-20">Let's begin!</h1>
 
             <?php
                 $wp_domain = get_site_url();
                 $wp_domain = str_replace('https://', '', $wp_domain);
                 $wp_domain = str_replace('http://', '', $wp_domain);
             ?>
-            <a href="https://my.claspo.io/auth-ui/#registration?domain=<?php echo $wp_domain; ?>&source=wordpress" class="cl-btn-primary"><span class="cl-btn-label">Sign up and create new widget</span></a>
+            <a href="<?php echo esc_url("https://my.claspo.io/auth-ui/#registration?domain=" . urlencode($wp_domain) . "&source=wordpress"); ?>" class="cl-btn-primary"><span class="cl-btn-label">Sign up and create new widget</span></a>
 
             <div class="pt-24 pb-24">
                 <div class="h3 text-center">Or</div>
             </div>
             <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
-                <input type="hidden" name="action" value="csp_save_script">
-				<?php wp_nonce_field('csp_save_script', 'csp_nonce'); ?>
+                <input type="hidden" name="action" value="claspo_save_script">
+                <?php wp_nonce_field('claspo_save_script', 'claspo_nonce'); ?>
                 <div class="cl-form-group">
                     <label for="script-id">Enter Script ID</label>
-                    <input type="text" id="script-id" name="csp_script_id" placeholder="Script ID" maxlength="50" required>
+                    <input type="text" id="script-id" name="claspo_script_id" placeholder="Script ID" maxlength="50" required>
                     <span class="error" id="script-id-error">Field can't be blank</span>
                     <?php
                         if ( isset($error_message) && !empty($error_message) ) {
-                            echo '<span class="error" style="display: block;">' . $error_message . '</span>';
+                            echo '<span class="error" style="display: block;">' . esc_html($error_message) . '</span>';
                         }
                     ?>
                 </div>
@@ -40,5 +46,5 @@
             </div>
         </div>
     </div>
-    <div class="banner" style="background: url(<?php echo plugins_url('img/banner-bg.svg', dirname(__FILE__)); ?>) no-repeat top left;"></div>
+    <div class="banner" style="background: url(<?php echo esc_url(plugins_url('img/banner-bg.svg', dirname(__FILE__))); ?>) no-repeat top left;"></div>
 </div>
