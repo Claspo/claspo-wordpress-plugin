@@ -144,9 +144,19 @@ function claspo_disconnect_script() {
 }
 
 add_action( 'wp_footer', 'claspo_add_claspo_script' );
+
 function claspo_add_claspo_script() {
+    // Реєструємо пустий скрипт
+    wp_register_script('claspo-script', false);
+    wp_enqueue_script('claspo-script');
+
+    // Отримуємо скрипт з бази даних
     $script_code = get_option( 'claspo_script_code' );
 
+    // Видаляємо теги <script> з коду
+    $script_code = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '$1', $script_code);
+
+    // Додаємо скрипт без тегів <script>, якщо він існує
     if ( $script_code ) {
         wp_add_inline_script('claspo-script', $script_code);
     }
