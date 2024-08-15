@@ -23,8 +23,17 @@ add_action( 'admin_init', 'claspo_check_script_id' );
 add_action( 'admin_enqueue_scripts', 'claspo_enqueue_admin_scripts' );
 
 function claspo_add_admin_menu() {
+    $claspo_script_id = get_option('claspo_script_id');
+    $menu_title = 'Claspo';
+
+    // Add badge if the script ID is not set
+    if (!$claspo_script_id) {
+        $menu_title .= ' <span class="awaiting-mod update-plugins count-1"><span class="pending-count">1</span></span>';
+    }
+
+
 //    add_options_page( 'Claspo', 'Claspo', 'manage_options', 'claspo_script_plugin', 'claspo_options_page' );
-    add_menu_page( 'Claspo', 'Claspo', 'manage_options', 'claspo_script_plugin', 'claspo_options_page', plugin_dir_url( __FILE__ ) . 'img/claspo_logo.png');
+    add_menu_page( 'Claspo', $menu_title, 'manage_options', 'claspo_script_plugin', 'claspo_options_page', plugin_dir_url( __FILE__ ) . 'img/claspo_logo.png');
 }
 
 function claspo_check_script_id() {
@@ -34,8 +43,14 @@ function claspo_check_script_id() {
 
         $response = wp_remote_get( CLASPO_GET_SCRIPT_URL . $script_id);
 
-        if ( is_wp_error( $response ) ) {
-            $error_message = $response->get_error_message();
+        if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
+            if ( is_wp_error( $response ) ) {
+                $error_message = $response->get_error_message();
+            } else {
+                $responseBody = json_decode( wp_remote_retrieve_body( $response), true);
+                $error_message = $responseBody['errorMessage'] ?? 'Invalid response from API';
+            }
+
             set_transient( 'claspo_api_error', $error_message, 30 );
         } else {
             $body = wp_remote_retrieve_body( $response );
@@ -106,8 +121,14 @@ function claspo_save_script() {
 
         $response = wp_remote_get( CLASPO_GET_SCRIPT_URL . $script_id);
 
-        if ( is_wp_error( $response ) ) {
-            $error_message = $response->get_error_message();
+        if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
+            if ( is_wp_error( $response ) ) {
+                $error_message = $response->get_error_message();
+            } else {
+                $responseBody = json_decode( wp_remote_retrieve_body( $response), true);
+                $error_message = $responseBody['errorMessage'] ?? 'Invalid response from API';
+            }
+
             set_transient( 'claspo_api_error', $error_message, 30 );
         } else {
             $body = wp_remote_retrieve_body( $response );
@@ -182,12 +203,16 @@ function claspo_send_feedback() {
         wp_die( 'You do not have sufficient permissions to access this page.', 'Permission Error', array( 'response' => 403 ) );
     }
 
+    $wp_domain = get_site_url();
+    $wp_domain = str_replace('https://', '', $wp_domain);
+    $wp_domain = str_replace('http://', '', $wp_domain);
+
     $script_id = get_option( 'claspo_script_id' );
     $feedback = isset( $_POST['feedback'] ) ? sanitize_textarea_field( wp_unslash($_POST['feedback']) ) : 'No feedback provided';
 
     $to = 'integrations.feedback@claspo.io';
     $subject = 'Feedback from WordPress plugin';
-    $body = "Script ID: " . esc_html($script_id) . "\n\nFeedback:\n" . esc_html($feedback);
+    $body = "Domain: " . $wp_domain .  "\n\nScript ID: " . esc_html($script_id) . "\n\nFeedback:\n" . esc_html($feedback);
 
     wp_mail( $to, $subject, $body );
 
@@ -200,3 +225,24 @@ add_action( 'admin_init', 'claspo_register_settings' );
 function claspo_register_settings() {
     register_setting( 'claspo_options_group', 'claspo_script_id' );
 }
+
+// Додаємо функцію для редіректу після активації плагіну
+function claspo_plugin_activate() {
+    // Зберігаємо змінну, щоб перевірити чи був плагін щойно активований
+    add_option('claspo_plugin_activated', true);
+}
+
+// Реєструємо функцію активації
+register_activation_hook(__FILE__, 'claspo_plugin_activate');
+
+// Перевіряємо чи плагін був щойно активований, і виконуємо редірект
+function claspo_plugin_redirect() {
+    if (get_option('claspo_plugin_activated', false)) {
+        delete_option('claspo_plugin_activated');
+        wp_redirect(admin_url('admin.php?page=claspo_script_plugin'));
+        exit;
+    }
+}
+
+// Додаємо дію для виконання редіректу після ініціалізації адміністративної частини
+add_action('admin_init', 'claspo_plugin_redirect');
