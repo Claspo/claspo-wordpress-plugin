@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
             <div class="pt-24 pb-24">
                 <div class="h3 text-center">Or</div>
             </div>
-            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" class="">
+            <form action="<?php echo esc_url(admin_url('admin-post.php')); ?>" method="post">
                 <input type="hidden" name="action" value="claspo_save_script">
                 <?php wp_nonce_field('claspo_save_script', 'claspo_nonce'); ?>
 
