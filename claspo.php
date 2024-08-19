@@ -216,6 +216,9 @@ function claspo_send_feedback() {
 
     wp_mail( $to, $subject, $body );
 
+    delete_option( 'claspo_script_id' );
+    delete_option( 'claspo_script_code' );
+
     deactivate_plugins( plugin_basename( __FILE__ ), true );
     wp_safe_redirect( admin_url( 'plugins.php?deactivated=true' ) );
     exit;
