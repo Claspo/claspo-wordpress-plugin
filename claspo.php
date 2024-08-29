@@ -4,7 +4,7 @@
  * Plugin Name: Claspo
  * Plugin URI: https://github.com/Claspo/claspo-wordpress-plugin
  * Description: Adds the Claspo script to all pages of the site.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: Claspo
  * Author URI: https://github.com/Claspo
  * License: GPL-2.0+
@@ -60,6 +60,8 @@ function claspo_check_script_id() {
                 update_option( 'claspo_script_code', $body );
                 set_transient( 'claspo_success_message', true, 30 );
                 delete_transient( 'claspo_api_error' );
+
+                claspo_clear_cache();
             } else {
                 set_transient( 'claspo_api_error', 'Invalid response from API', 30 );
             }
@@ -138,6 +140,8 @@ function claspo_save_script() {
                 update_option( 'claspo_script_code', $body );
                 set_transient( 'claspo_success_message', true, 30 );
                 delete_transient( 'claspo_api_error' );
+
+                claspo_clear_cache();
             } else {
                 set_transient( 'claspo_api_error', 'Invalid response from API', 30 );
             }
@@ -159,6 +163,8 @@ function claspo_disconnect_script() {
 
     delete_option( 'claspo_script_id' );
     delete_option( 'claspo_script_code' );
+
+    claspo_clear_cache();
 
     wp_safe_redirect( admin_url( 'admin.php?page=claspo_script_plugin' ) );
     exit;
@@ -212,7 +218,13 @@ function claspo_send_feedback() {
 
     $to = 'integrations.feedback@claspo.io';
     $subject = 'Feedback from WordPress plugin';
-    $body = "Domain: " . $wp_domain .  "\n\nScript ID: " . esc_html($script_id) . "\n\nFeedback:\n" . esc_html($feedback);
+    $body = "Domain: " . $wp_domain
+            . "\n\nScript ID: " . esc_html($script_id)
+            . "\n\nFeedback:\n" . esc_html($feedback)
+            . "\n\nPlugin version:\n" . esc_html( get_plugin_data( __FILE__ )['Version'] )
+            . "\n\nWordPress version:\n" . esc_html( get_bloginfo( 'version' ) )
+            . "\n\nPHP version:\n" . esc_html( phpversion() );
+    ;
 
     wp_mail( $to, $subject, $body );
 
@@ -220,6 +232,8 @@ function claspo_send_feedback() {
     delete_option( 'claspo_script_code' );
 
     deactivate_plugins( plugin_basename( __FILE__ ), true );
+
+    claspo_clear_cache();
     wp_safe_redirect( admin_url( 'plugins.php?deactivated=true' ) );
     exit;
 }
@@ -249,3 +263,61 @@ function claspo_plugin_redirect() {
 
 // Додаємо дію для виконання редіректу після ініціалізації адміністративної частини
 add_action('admin_init', 'claspo_plugin_redirect');
+
+
+function claspo_clear_cache() {
+    try {
+        global $wp_fastest_cache;
+        // if W3 Total Cache is being used, clear the cache
+        if (function_exists('w3tc_flush_all')) {
+            w3tc_flush_all();
+        }
+        /* if WP Super Cache is being used, clear the cache */
+        if (function_exists('wp_cache_clean_cache')) {
+            global $file_prefix, $supercachedir;
+            if (empty($supercachedir) && function_exists('get_supercache_dir')) {
+                $supercachedir = get_supercache_dir();
+            }
+            wp_cache_clean_cache($file_prefix);
+        }
+
+        if (method_exists('WpFastestCache', 'deleteCache') && !empty($wp_fastest_cache)) {
+            $wp_fastest_cache->deleteCache();
+        }
+        if (function_exists('rocket_clean_domain')) {
+            rocket_clean_domain();
+            // Preload cache.
+            if (function_exists('run_rocket_sitemap_preload')) {
+                run_rocket_sitemap_preload();
+            }
+        }
+
+        if (class_exists("autoptimizeCache") && method_exists("autoptimizeCache", "clearall")) {
+            autoptimizeCache::clearall();
+        }
+
+        if (class_exists("LiteSpeed_Cache_API") && method_exists("autoptimizeCache", "purge_all")) {
+            LiteSpeed_Cache_API::purge_all();
+        }
+
+        if (class_exists('\Hummingbird\Core\Utils')) {
+            $modules = \Hummingbird\Core\Utils::get_active_cache_modules();
+            foreach ($modules as $module => $name) {
+                $mod = \Hummingbird\Core\Utils::get_module($module);
+
+                if ($mod->is_active()) {
+                    if ('minify' === $module) {
+                        $mod->clear_files();
+                    } else {
+                        $mod->clear_cache();
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // do nothing
+    }
+}
+
+
+?>
