@@ -1,13 +1,14 @@
 <?php
 
 /**
- * Plugin Name: Claspo
- * Plugin URI: https://github.com/Claspo/claspo-wordpress-plugin
- * Description: Adds the Claspo script to all pages of the site.
- * Version: 1.0.2
- * Author: Claspo
- * Author URI: https://github.com/Claspo
+ * Plugin Name: Claspo - Popups, Spin the Wheel & Email Capture
+ * Description: Grow your email list and increase sales! Use the Claspo Popup Maker plugin to create pop-up windows, Spin the Wheel, Exit Intent, and Lead Gen forms.
+ * Version: 1.0.9
+ * Author: Claspo Popup Builder team
+ * Author URI: https://www.claspo.io
  * License: GPL-2.0+
+ * WC requires at least: 9.0
+ * WC tested up to: 10.5.2
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -21,6 +22,12 @@ add_action( 'admin_post_claspo_save_script', 'claspo_save_script' );
 add_action( 'admin_post_claspo_disconnect_script', 'claspo_disconnect_script' );
 add_action( 'admin_init', 'claspo_check_script_id' );
 add_action( 'admin_enqueue_scripts', 'claspo_enqueue_admin_scripts' );
+
+add_action( 'before_woocommerce_init', function () {
+    if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
+        \Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+    }
+} );
 
 function claspo_add_admin_menu() {
     $claspo_script_id = get_option('claspo_script_id');
@@ -37,7 +44,17 @@ function claspo_add_admin_menu() {
 }
 
 function claspo_check_script_id() {
+    // Security fix for CVE-2025-68568: Check user capabilities
+    if ( ! current_user_can( 'manage_options' ) ) {
+        return;
+    }
+
     if ( isset( $_GET['script_id'] ) && ! empty( $_GET['script_id'] ) ) {
+        // Security fix for CVE-2025-68568: Verify nonce for GET requests
+        if ( ! isset( $_GET['claspo_nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['claspo_nonce'] ) ), 'claspo_script_callback' ) ) {
+            wp_die( 'Security check failed', 'Security Error', array( 'response' => 403 ) );
+        }
+
         $script_id = sanitize_text_field( wp_unslash($_GET['script_id']) );
         update_option( 'claspo_script_id', $script_id );
 
@@ -86,7 +103,8 @@ function claspo_options_page() {
     $error_message   = get_transient( 'claspo_api_error' );
     $success_message = get_transient( 'claspo_success_message' );
 
-    if ( isset( $_GET['deactivation_feedback'] ) && $_GET['deactivation_feedback'] == 1 ) {
+    if ( isset( $_GET['deactivation_feedback'] ) && $_GET['deactivation_feedback'] == 1
+         && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'claspo_deactivation_feedback' ) ) {
         include plugin_dir_path( __FILE__ ) . 'templates/feedback.php';
     } elseif ( $success_message && $script_code ) {
         include plugin_dir_path( __FILE__ ) . 'templates/success.php';
@@ -148,7 +166,7 @@ function claspo_save_script() {
         }
     }
 
-    wp_redirect( admin_url( 'admin.php?page=claspo_script_plugin' ) );
+    wp_safe_redirect( admin_url( 'admin.php?page=claspo_script_plugin' ) );
     exit;
 }
 
@@ -193,7 +211,7 @@ register_deactivation_hook( __FILE__, 'claspo_deactivation_feedback' );
 
 function claspo_deactivation_feedback() {
     if ( current_user_can( 'manage_options' ) ) {
-        wp_safe_redirect( admin_url( 'admin.php?page=claspo_script_plugin&deactivation_feedback=1' ) );
+        wp_safe_redirect( admin_url( 'admin.php?page=claspo_script_plugin&deactivation_feedback=1&_wpnonce=' . wp_create_nonce( 'claspo_deactivation_feedback' ) ) );
         exit;
     }
 }
@@ -240,7 +258,9 @@ function claspo_send_feedback() {
 
 add_action( 'admin_init', 'claspo_register_settings' );
 function claspo_register_settings() {
-    register_setting( 'claspo_options_group', 'claspo_script_id' );
+    register_setting( 'claspo_options_group', 'claspo_script_id', array(
+        'sanitize_callback' => 'sanitize_text_field',
+    ) );
 }
 
 // Додаємо функцію для редіректу після активації плагіну
@@ -256,7 +276,7 @@ register_activation_hook(__FILE__, 'claspo_plugin_activate');
 function claspo_plugin_redirect() {
     if (get_option('claspo_plugin_activated', false)) {
         delete_option('claspo_plugin_activated');
-        wp_redirect(admin_url('admin.php?page=claspo_script_plugin'));
+        wp_safe_redirect(admin_url('admin.php?page=claspo_script_plugin'));
         exit;
     }
 }
@@ -274,9 +294,9 @@ function claspo_clear_cache() {
         }
         /* if WP Super Cache is being used, clear the cache */
         if (function_exists('wp_cache_clean_cache')) {
-            global $file_prefix, $supercachedir;
-            if (empty($supercachedir) && function_exists('get_supercache_dir')) {
-                $supercachedir = get_supercache_dir();
+            global $file_prefix;
+            if (function_exists('get_supercache_dir')) {
+                get_supercache_dir();
             }
             wp_cache_clean_cache($file_prefix);
         }
@@ -296,7 +316,7 @@ function claspo_clear_cache() {
             autoptimizeCache::clearall();
         }
 
-        if (class_exists("LiteSpeed_Cache_API") && method_exists("autoptimizeCache", "purge_all")) {
+        if (class_exists("LiteSpeed_Cache_API") && method_exists("LiteSpeed_Cache_API", "purge_all")) {
             LiteSpeed_Cache_API::purge_all();
         }
 
