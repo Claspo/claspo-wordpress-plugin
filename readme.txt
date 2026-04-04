@@ -3,7 +3,7 @@ Contributors: integrationclaspo
 Tags: popup, pop up, popup builder, popup maker, exit intent popup
 Requires at least: 1.0
 Tested up to: 6.9
-Stable tag: 1.0.9
+Stable tag: 1.1.0
 Requires PHP: 7.0
 Plugin URI: https://www.claspo.io
 License: GPLv2 or later
@@ -201,6 +201,11 @@ To understand how Claspo handles user data collected on your website, please ref
 
 == Changelog ==
 
+= 1.1.0 =
+* Auto-verification of script installation after saving Script ID
+* Bug fixes
+* UI improvements
+
 = 1.0.9 =
 * WooCommerce compatibility
 
@@ -222,14 +227,14 @@ To understand how Claspo handles user data collected on your website, please ref
 * WordPress 6.7 compatibility
 
 = 1.0.3 =
-* New branding and video.
+* New branding and video
 
 = 1.0.2 =
 * Introduced compatibility with popular caching plugins such as WP Rocket, WP Fastest Cache, LiteSpeed Cache, Autoptimize, and Hummingbird.
 
 = 1.0.1 =
-* Bug fixes.
-* UI improvements.
+* Bug fixes
+* UI improvements
 
 = 1.0.0 =
-Initial release.
+Initial release

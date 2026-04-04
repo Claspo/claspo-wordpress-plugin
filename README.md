@@ -1,6 +1,6 @@
 === Claspo ===
 Tested up to: 6.9
-Stable tag: 1.0.9
+Stable tag: 1.1.0
 License: GPLv2 or later
 
 Adds the Claspo script to all pages of the site.
