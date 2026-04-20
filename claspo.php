@@ -291,7 +291,7 @@ function claspo_verify_and_ping( $script_id ) {
 
         $html = wp_remote_retrieve_body( $home_response );
 
-        if ( empty( $html ) || stripos( $html, 'claspo' ) === false ) {
+        if ( empty( $html ) || stripos( $html, $script_id ) === false ) {
             return false;
         }
 
