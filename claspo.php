@@ -205,7 +205,7 @@ function claspo_register_rest_routes() {
  * @return WP_REST_Response
  */
 function claspo_rest_connect( WP_REST_Request $request ) {
-    $params = $request->get_json_params();
+    $params = json_decode( (string) $request->get_body(), true );
     if ( ! is_array( $params ) ) {
         return claspo_rest_connect_error();
     }
