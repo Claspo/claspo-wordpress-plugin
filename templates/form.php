@@ -18,13 +18,10 @@ if ( ! defined( 'ABSPATH' ) ) {
             $claspo_state = wp_generate_password( 32, false );
             set_transient( CLASPO_STATE_TRANSIENT . $claspo_state, 1, CLASPO_STATE_TTL );
 
-            $claspo_callback_url = admin_url( 'admin.php?page=claspo_script_plugin');
-
             $claspo_registration_url = 'https://my.claspo.io/auth-ui/#registration?'
                 . 'domain=' . urlencode( $claspo_wp_domain )
                 . '&integration_source=wordpress'
-                . '&state=' . urlencode( $claspo_state )
-                . '&callback_url=' . urlencode( $claspo_callback_url );
+                . '&state=' . urlencode( $claspo_state );
             ?>
             <a href="<?php echo esc_url( $claspo_registration_url ); ?>" class="cl-btn-primary">
                 <span class="cl-btn-label">Sign up and create new widget</span>
