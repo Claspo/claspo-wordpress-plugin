@@ -210,11 +210,10 @@ function claspo_rest_connect( WP_REST_Request $request ) {
         return claspo_rest_connect_error();
     }
 
-    $state     = isset( $params['state'] ) ? (string) $params['state'] : '';
+    $state     = isset( $params['state'] ) ? sanitize_text_field( (string) $params['state'] ) : '';
     $script_id = isset( $params['script_id'] ) ? sanitize_text_field( (string) $params['script_id'] ) : '';
 
     // The state token we generate has a known shape (wp_generate_password, 32 chars, [A-Za-z0-9]).
-    // A cheap sanity check here avoids building transient keys from arbitrary user input.
     if ( $state === '' || ! preg_match( '/^[A-Za-z0-9]{16,128}$/', $state ) ) {
         return claspo_rest_connect_error();
     }
